@@ -165,9 +165,16 @@ export const findCrossExchangeOpportunities = (
                       ticker.symbol.includes('-USD');
     if (isFutures) return;
 
-    // Normalize symbol (e.g., BTC/USDT)
-    const symbol = ticker.symbol.toUpperCase().replace('-', '/');
+    // Standardize symbol (e.g., BTC/USDT)
+    let symbol = ticker.symbol.toUpperCase().replace('-', '/');
+    // Handle cases like BTCUSDT (Binance style) if needed, but CCXT usually provides /
+    if (!symbol.includes('/')) return;
+    
+    // Ensure it's a USDT pair
     if (!symbol.includes('/USDT')) return;
+    
+    // Strip everything after USDT (e.g. BTC/USDT:USDT -> BTC/USDT)
+    symbol = symbol.split(':')[0];
 
     if (!symbolGroups[symbol]) {
         symbolGroups[symbol] = [ticker];

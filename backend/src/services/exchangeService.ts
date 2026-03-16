@@ -204,24 +204,35 @@ export const fetchTickersForExchanges = async (): Promise<TickerData[]> => {
     return tickersCache;
   }
 
-  // Only scan top exchanges in parallel to keep it fast
-  const svfIds = ['binance', 'bybit', 'okx', 'bitget', 'kucoin', 'gateio', 'mexc'];
+  // Scan a broader range of exchanges for Spot vs Futures and Cross-Exchange
+  const svfIds = ['binance', 'bybit', 'okx', 'bitget', 'kucoin', 'gateio', 'mexc', 'htx', 'bingx', 'phemex'];
   
   const spotToFetch = spotExchanges.filter(e => svfIds.includes(e.id));
   const swapToFetch = swapExchanges.filter(e => svfIds.includes(e.id));
 
   // Limit concurrency for tickers to avoid IP bans and slow responses
+  // Use a smaller batch size to prevent overloading the event loop
   const fetchTickerBatch = async (instances: ExchangeInstance[]) => {
-    return Promise.all(instances.map(async ({ id, client }) => {
-      try {
-        if (Object.keys(client.markets || {}).length === 0) {
-          await withTimeout(client.loadMarkets(), FETCH_TIMEOUT);
+    const results = [];
+    // Process in smaller parallel chunks of 3 to stay within memory limits on Render free tier
+    for (let i = 0; i < instances.length; i += 3) {
+      const chunk = instances.slice(i, i + 3);
+      const chunkResults = await Promise.all(chunk.map(async ({ id, client }) => {
+        try {
+          if (Object.keys(client.markets || {}).length === 0) {
+            await withTimeout(client.loadMarkets(), FETCH_TIMEOUT);
+          }
+          if (!client.has['fetchTickers']) return [];
+          const tickers = await withTimeout(client.fetchTickers(), FETCH_TIMEOUT);
+          return formatTickers(id, tickers);
+        } catch (e) { 
+          console.error(`Error fetching tickers for ${id}:`, e);
+          return []; 
         }
-        if (!client.has['fetchTickers']) return [];
-        const tickers = await withTimeout(client.fetchTickers(), FETCH_TIMEOUT);
-        return formatTickers(id, tickers);
-      } catch (e) { return []; }
-    }));
+      }));
+      results.push(...chunkResults);
+    }
+    return results;
   };
 
   const [spotResults, swapResults] = await Promise.all([
