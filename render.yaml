@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: crypto-arb-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
+    healthCheckPath: /health
+    disk:
+      name: ccxt-cache
+      mountPath: /root/.cache
+      sizeGB: 1
