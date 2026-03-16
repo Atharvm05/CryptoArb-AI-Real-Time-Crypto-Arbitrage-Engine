@@ -3,9 +3,9 @@ services:
     name: crypto-arb-backend
     env: node
     plan: free
-    rootDir: backend
-    buildCommand: npm install && npm run build && ls -R dist
-    startCommand: npm start
+    rootDir: ./
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
     envVars:
       - key: PORT
         value: 10000
