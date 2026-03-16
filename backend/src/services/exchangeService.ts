@@ -196,7 +196,7 @@ export const fetchAllFundingRatesInternal = async (): Promise<FundingRateData[]>
 
 let tickersCache: TickerData[] = [];
 let lastTickerFetchTimestamp = 0;
-const TICKER_CACHE_TTL = 5000; // Keep fast for arbitrage
+const TICKER_CACHE_TTL = 10000; // Keep slightly longer for stability on Render free tier
 
 export const fetchTickersForExchanges = async (): Promise<TickerData[]> => {
   const now = Date.now();
@@ -205,7 +205,7 @@ export const fetchTickersForExchanges = async (): Promise<TickerData[]> => {
   }
 
   // Scan a broader range of exchanges for Spot vs Futures and Cross-Exchange
-  const svfIds = ['binance', 'bybit', 'okx', 'bitget', 'kucoin', 'gateio', 'mexc', 'htx', 'bingx', 'phemex'];
+  const svfIds = ['binance', 'bybit', 'okx', 'bitget', 'kucoin'];
   
   const spotToFetch = spotExchanges.filter(e => svfIds.includes(e.id));
   const swapToFetch = swapExchanges.filter(e => svfIds.includes(e.id));
