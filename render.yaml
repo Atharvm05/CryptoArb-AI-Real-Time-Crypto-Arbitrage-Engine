@@ -12,7 +12,3 @@ services:
       - key: NODE_ENV
         value: production
     healthCheckPath: /health
-    disk:
-      name: ccxt-cache
-      mountPath: /root/.cache
-      sizeGB: 1
